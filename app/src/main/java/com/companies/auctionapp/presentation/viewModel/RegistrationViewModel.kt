@@ -65,13 +65,11 @@ class RegistrationViewModel : ViewModel() {
                     _registrationResult.value = Result.Success(response.body()!!)
                     Log.d("TAG", "register: ${response.body()}")
                     Toast.makeText(context,"Account Created, Please Login to Continue",Toast.LENGTH_SHORT).show()
-                    val userDetails = RegisterData(email, username, password)
-                    SharedPreferencesHelper.saveUserDetails(context, userDetails)
                     navigate(LOGIN_SCREEN)
                 } else {
                     isLoading.value = false
                     _registrationResult.value = Result.Error(Exception(response.message()))
-                    Toast.makeText(context,response.message(),Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context,response.body()?.message,Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 isLoading.value = false

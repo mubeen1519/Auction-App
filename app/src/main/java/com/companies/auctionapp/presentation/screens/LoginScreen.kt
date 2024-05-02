@@ -62,7 +62,7 @@ fun LoginScreen(
 
         // Register Button
         Button(
-            onClick = { viewModel.login(context) },
+            onClick = { viewModel.login(context,navigate) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp)
