@@ -44,30 +44,6 @@ fun DetailsScreen(
 ) {
     val bids = viewModel.bids.observeAsState()
     val isLoggedIn = SharedPreferencesHelper.getUserDetails()
-    val context = LocalContext.current
-
-    // Trigger the login API call again after every 3 hours
-//    var lastLoginCheckTime by remember { mutableStateOf(Calendar.getInstance()) }
-//
-//    LaunchedEffect(key1 = lastLoginCheckTime) {
-//        while (true) {
-//            withContext(Dispatchers.IO) {
-//                val currentTime = Calendar.getInstance()
-//                val timeDifference = currentTime.timeInMillis - lastLoginCheckTime.timeInMillis
-//                val threeHoursInMillis = 3 * 60 * 60 * 1000 // 3 hours in milliseconds
-//                if (timeDifference >= threeHoursInMillis) {
-//                    // Perform login API call again
-//                        viewModel.loginUserAgain()
-//
-//                    // Update the last login check time
-//                    lastLoginCheckTime = currentTime
-//                }
-//                // Wait for 3 hours before checking again
-//                delay(threeHoursInMillis.toLong())
-//            }
-//        }
-//    }
-
 
     LaunchedEffect(key1 = Unit) {
         viewModel.fetchBids(auctionItem.id)
@@ -119,7 +95,6 @@ fun DetailsScreen(
                         val bids = result.data as List<Bid>
                         LazyColumn {
                             items(bids) { bidItem ->
-                                Text(text = bidItem.id.toString())
                                 Text(text = bidItem.amount.toString())
                             }
                         }

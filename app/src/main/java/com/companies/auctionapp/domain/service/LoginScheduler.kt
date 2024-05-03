@@ -15,7 +15,7 @@ class LoginScheduler(private val context: Context) {
             context,
             0,
             alarmIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val intervalMillis = TimeUnit.HOURS.toMillis(3) // 3 hours
@@ -36,7 +36,7 @@ class LoginScheduler(private val context: Context) {
             context,
             0,
             alarmIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         alarmManager.cancel(pendingIntent)
     }
