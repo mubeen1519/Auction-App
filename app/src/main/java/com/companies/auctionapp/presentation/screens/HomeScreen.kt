@@ -1,5 +1,6 @@
 package com.companies.auctionapp.presentation.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -23,6 +23,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,10 +40,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.companies.auctionapp.R
 import com.companies.auctionapp.data.AuctionItem
 import com.companies.auctionapp.presentation.navigation.DETAIL_SCREEN
 import com.companies.auctionapp.presentation.viewModel.HomeViewModel
@@ -67,55 +71,72 @@ fun HomeScreen(
             TopAppBar(title = { /*TODO*/ },
                 actions = {
                     IconButton(onClick = { dialogOpen = true }) {
-                        Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
+                        Icon(
+                            imageVector = Icons.Default.Search, contentDescription = stringResource(
+                                id = R.string.search
+                            )
+                        )
                     }
                 })
         }
     ) {
 
         if (dialogOpen) {
-            SearchDialog(onSearch = { category, maxPrice ->
-                viewModel.fetchAuctionItems(category = category, maxPrice = maxPrice)
-            }, onDismiss = { dialogOpen = false })
+            when (val result = categoryItemResult) {
+                is Result.Success -> {
+                    val categories = result.data as List<String>
+                    SearchDialog(
+                        categories = categories,
+                        onSearch = { category, maxPrice ->
+                            viewModel.fetchAuctionItems(category = category, maxPrice = maxPrice)
+                        },
+                        onDismiss = { dialogOpen = false }
+                    )
+                }
+                // Handle other cases if needed
+                else -> {
+                    // Handle loading or error cases
+                }
+            }
         }
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(it)
         ) {
-            when (val categoriesResult = categoryItemResult) {
-                is Result.Success -> {
-                    val categories = categoriesResult.data as List<String>
-                    LazyRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp)
-                    ) {
-                        items(categories) { category ->
-                            // Render UI for category
-                            CategoryItem(category)
-                        }
-                    }
-                }
+//            when (val categoriesResult = categoryItemResult) {
+//                is Result.Success -> {
+//                    val categories = categoriesResult.data as List<String>
+//                    LazyRow(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .padding(10.dp)
+//                    ) {
+//                        items(categories) { category ->
+//                            // Render UI for category
+//                            CategoryItem(category)
+//                        }
+//                    }
+//                }
 
-                is Result.Loading -> {
-                    // Show loading indicator for categories
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-
-                    }
-                }
-
-                is Result.Error -> {
-                    // Show error message for categories
-                    Text(text = "Error: ${categoriesResult.failure.message}")
-
-                }
-
-                else -> {
-
-                }
-            }
+//                is Result.Loading -> {
+//                    // Show loading indicator for categories
+//                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+//                        CircularProgressIndicator()
+//
+//                    }
+//                }
+//
+//                is Result.Error -> {
+//                    // Show error message for categories
+//                    Text(text = "Error: ${categoriesResult.failure.message}")
+//
+//                }
+//
+//                else -> {
+//
+//                }
+//            }
             when (val result = auctionItemsResult) {
                 is Result.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -164,7 +185,9 @@ fun AuctionItemRow(auctionItem: AuctionItem, onClick: () -> Unit) {
 
         ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -172,7 +195,7 @@ fun AuctionItemRow(auctionItem: AuctionItem, onClick: () -> Unit) {
             IconButton(onClick = onClick) {
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowRight,
-                    contentDescription = "Arrow Right"
+                    contentDescription = stringResource(id = R.string.arrow_right)
                 )
             }
         }
@@ -196,15 +219,19 @@ fun CategoryItem(item: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchDialog(
+    categories: List<String>,
     onSearch: (category: String?, maxPrice: Int?) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var categoryName by remember { mutableStateOf("") }
+    var expanded by remember {
+        mutableStateOf(false)
+    }
+    var selectedCategoryIndex by remember { mutableStateOf(0) }
     var maxPriceText by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = { onDismiss() },
-        title = { Text(text = "Search Items") },
+        title = { Text(text = stringResource(id = R.string.search_items)) },
         confirmButton = {
             Row(
                 horizontalArrangement = Arrangement.End,
@@ -213,32 +240,56 @@ fun SearchDialog(
                 Button(
                     onClick = {
                         val maxPrice = maxPriceText.toIntOrNull()
-                        onSearch(categoryName.takeIf { it.isNotEmpty() }, maxPrice)
+                        val category =
+                            if (selectedCategoryIndex == 0) null else categories[selectedCategoryIndex - 1]
+                        onSearch(category, maxPrice)
                         onDismiss()
                     }
                 ) {
-                    Text(text = "Search")
+                    Text(text = stringResource(id = R.string.search))
                 }
             }
         },
         text = {
             Column(modifier = Modifier.padding(8.dp)) {
-                OutlinedTextField(
-                    value = categoryName,
-                    onValueChange = { categoryName = it },
-                    label = { Text("Category Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = { expanded = true })
+                    ) {
+                        Text(
+                            text = if (selectedCategoryIndex == 0) stringResource(id = R.string.select_category) else categories[selectedCategoryIndex - 1],
+                            modifier = Modifier.padding(vertical = 16.dp)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        categories.forEachIndexed { index, category ->
+                            DropdownMenuItem(
+                                onClick = {
+                                    selectedCategoryIndex = index + 1
+                                    expanded = false
+                                },
+                                text = {
+                                    Text(text = category)
+                                }
+                            )
+                        }
+                    }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedTextField(
-                    value = maxPriceText,
-                    onValueChange = { maxPriceText = it },
-                    label = { Text("Max Price") },
-                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    OutlinedTextField(
+                        value = maxPriceText,
+                        onValueChange = { maxPriceText = it },
+                        label = { Text(stringResource(id = R.string.max_price)) },
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     )

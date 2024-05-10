@@ -28,6 +28,8 @@ class LoginService : Service() {
             try {
                 val loginData = SharedPreferencesHelper.getUserDetails()
                 val response = loginData?.let { RetrofitInstance.apiService.login(it) }
+                val token = response?.body()?.token
+                token?.let { SharedPreferencesHelper.saveJwtToken(it) }
             } catch (e : Exception){
                 Log.d("LoginService", e.message.toString())
             }

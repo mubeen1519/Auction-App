@@ -17,9 +17,11 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.companies.auctionapp.R
 import com.companies.auctionapp.presentation.navigation.REGISTRATION_SCREEN
 import com.companies.auctionapp.presentation.viewModel.LoginViewModel
 import com.companies.auctionapp.ui.utils.Result
@@ -43,7 +45,7 @@ fun LoginScreen(
         OutlinedTextField(
             value = viewModel.data.value.username,
             onValueChange = { viewModel.onUsernameChange(it) },
-            label = { Text("Username") },
+            label = { Text(stringResource(id = R.string.username)) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp)
@@ -53,7 +55,7 @@ fun LoginScreen(
         OutlinedTextField(
             value = viewModel.data.value.password,
             onValueChange = { viewModel.onPasswordChange(it) },
-            label = { Text("Password") },
+            label = { Text(stringResource(id = R.string.password)) },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier
                 .fillMaxWidth()
@@ -67,11 +69,11 @@ fun LoginScreen(
                 .fillMaxWidth()
                 .padding(top = 16.dp)
         ) {
-            Text("Login")
+            Text(stringResource(id = R.string.login))
         }
 
         Text(
-            text = "OR",
+            text = stringResource(id = R.string.or),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp),
@@ -84,7 +86,7 @@ fun LoginScreen(
                 .fillMaxWidth()
                 .padding(top = 16.dp)
         ) {
-            Text("Create Account")
+            Text(stringResource(id = R.string.create_Account))
         }
 
 

@@ -8,6 +8,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.companies.auctionapp.data.AccountType
 import com.companies.auctionapp.data.RegisterData
 import com.companies.auctionapp.data.RegistrationResponse
 import com.companies.auctionapp.domain.RetrofitInstance
@@ -36,10 +37,15 @@ class RegistrationViewModel : ViewModel() {
         data.value = data.value.copy(password = value)
     }
 
+    fun onAccountTypeSelected(accountType: AccountType) {
+        data.value = data.value.copy(accountType = accountType)
+    }
+
     fun register(context: Context,navigate : (String) -> Unit) {
         val password = data.value.password
         val email = data.value.email
         val username = data.value.username
+        val accountType = data.value.accountType
 
         // Validate password
         val passwordPattern = "[a-zA-Z0-9@.]+|\\d".toRegex()
@@ -65,6 +71,7 @@ class RegistrationViewModel : ViewModel() {
                     _registrationResult.value = Result.Success(response.body()!!)
                     Log.d("TAG", "register: ${response.body()}")
                     Toast.makeText(context,"Account Created, Please Login to Continue",Toast.LENGTH_SHORT).show()
+                    SharedPreferencesHelper.saveAccountType(accountType)
                     navigate(LOGIN_SCREEN)
                 } else {
                     isLoading.value = false

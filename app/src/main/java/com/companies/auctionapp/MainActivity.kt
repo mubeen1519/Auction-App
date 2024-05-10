@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
 import com.companies.auctionapp.domain.service.LoginScheduler
+import com.companies.auctionapp.presentation.navigation.ADD_SCREEN
 import com.companies.auctionapp.presentation.navigation.HOME_SCREEN
 import com.companies.auctionapp.presentation.navigation.NavGraph
 import com.companies.auctionapp.presentation.navigation.SETTINGS_SCREEN
@@ -78,7 +79,7 @@ class MainActivity : ComponentActivity() {
 
                             }, contentPadding = PaddingValues(10.dp), floatingActionButton = {
                                 FloatingActionButton(
-                                    onClick = { /* do something */ },
+                                    onClick = { navHostController.navigate(ADD_SCREEN) },
                                     containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                                     elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
                                 ) {
@@ -94,10 +95,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        loginScheduler.stopLoginScheduler()
     }
 }

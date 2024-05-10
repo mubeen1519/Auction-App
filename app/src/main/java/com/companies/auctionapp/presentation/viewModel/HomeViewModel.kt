@@ -1,5 +1,6 @@
 package com.companies.auctionapp.presentation.viewModel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -31,6 +32,7 @@ class HomeViewModel : ViewModel() {
 
                 if (response.isNotEmpty()) {
                     _auctionItemsResult.value = Result.Success(response)
+                    Log.d("TAG", "fetchAuctionItems: $response")
                 } else {
                     _auctionItemsResult.value = Result.Error(Exception("No items found"))
                 }
