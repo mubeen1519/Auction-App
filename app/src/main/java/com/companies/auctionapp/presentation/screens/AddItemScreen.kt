@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,12 +14,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DatePickerFormatter
+import androidx.compose.material3.DateRangePicker
+import androidx.compose.material3.DateRangePickerState
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -30,6 +37,8 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -39,15 +48,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.companies.auctionapp.R
+import com.companies.auctionapp.data.AccountType
 import com.companies.auctionapp.presentation.components.TimePickerDialog
 import com.companies.auctionapp.presentation.viewModel.AddViewModel
+import com.companies.auctionapp.ui.utils.Result
+import com.companies.auctionapp.ui.utils.SharedPreferencesHelper
+import com.companies.auctionapp.ui.utils.convertToIsoDateTime
+import com.companies.auctionapp.ui.utils.millisToLocalDate
 import java.text.SimpleDateFormat
-import java.time.LocalTime
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -58,15 +69,24 @@ fun AddNewItemScreen(
     viewModel: AddViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val data = viewModel.data
+    val categoryItemResult by viewModel.categoriesItemsResult.observeAsState()
 
     val context = LocalContext.current
-    var startDate by remember { mutableStateOf("") }
-    var startTime by remember { mutableStateOf("") }
-    var endDate by remember { mutableStateOf("") }
-    var endTime by remember { mutableStateOf("") }
 
+    var startDate by remember {
+        mutableStateOf("")
+    }
+    var startTime by remember {
+        mutableStateOf("")
+    }
+    var endDate by remember {
+        mutableStateOf("")
+    }
+    var endTime by remember {
+        mutableStateOf("")
+    }
     val startDateAndTime = viewModel.startDateAndTime.value
-    var endDateAndTime = viewModel.endDateAndTime.value
+    val endDateAndTime = viewModel.endDateAndTime.value
     val datePickerState = rememberDatePickerState()
     val endDatePickerState = rememberDatePickerState()
     val endTimePickerState = rememberTimePickerState()
@@ -76,14 +96,8 @@ fun AddNewItemScreen(
     var showTimePicker by remember { mutableStateOf(false) }
     var showTimePickerEnd by remember { mutableStateOf(false) }
 
-    val defaultEndDate: Calendar = Calendar.getInstance().apply {
-        add(Calendar.DAY_OF_MONTH, 3) // Default end time for Free accounts: 3 days after start time
-    }
 
-    val minEndDate: Calendar = Calendar.getInstance().apply {
-        add(Calendar.HOUR_OF_DAY, 12) // Minimum end time for Gold and Platinum users: 12 hours after start time
-    }
-
+    val accountType = SharedPreferencesHelper.getAccountType()
 
     Column(
         modifier = Modifier
@@ -129,12 +143,18 @@ fun AddNewItemScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            if (startDateAndTime.isEmpty()) {
-                Text(text = stringResource(id = R.string.start_date_and_time), modifier = Modifier.padding(end = 8.dp))
-                Icon(imageVector = Icons.Default.DateRange, contentDescription = stringResource(id = R.string.start_date_and_time))
+            if (startDate.isEmpty() || startTime.isEmpty()) {
+                Text(
+                    text = stringResource(id = R.string.start_date_and_time),
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = stringResource(id = R.string.start_date_and_time)
+                )
             } else {
 
-                Text(text = startDateAndTime)
+                Text(text = "$startDate $startTime")
             }
             if (showDialog.value) {
                 DatePickerDialog(
@@ -142,10 +162,8 @@ fun AddNewItemScreen(
                     confirmButton = {
                         TextButton(onClick = {
                             val selectedDateMillis = datePickerState.selectedDateMillis
-                            val selectedTime = LocalTime.of(timePickerStateVertical.hour, timePickerStateVertical.minute)
-                            if (selectedDateMillis != null) {
-                                viewModel.onStartDateTimeSelected(selectedDateMillis, selectedTime)
-                            }
+                           startDate = selectedDateMillis?.let { getFormattedDate(it) }.toString()
+                            viewModel.onStartDateTimeSelected(startDate)
                             showDialog.value = false
                             showTimePicker = true
                         }) {
@@ -172,6 +190,12 @@ fun AddNewItemScreen(
                         val calendar = Calendar.getInstance()
                         calendar.set(Calendar.HOUR_OF_DAY, timePickerStateVertical.hour)
                         calendar.set(Calendar.MINUTE, timePickerStateVertical.minute)
+                        val timeInMillis = calendar.time.time
+                        val formattedTime = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(timeInMillis)
+                        startTime = formattedTime
+                        val dateAndTime = convertToIsoDateTime("$startDate $startTime")
+                        viewModel.onStartDateTimeSelected(dateAndTime)
+
                     },
                 ) {
                     TimePicker(
@@ -193,8 +217,14 @@ fun AddNewItemScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             if (endDateAndTime.isEmpty()) {
-                Text(text = stringResource(id = R.string.end_date_and_time), modifier = Modifier.padding(end = 8.dp))
-                Icon(imageVector = Icons.Default.DateRange, contentDescription = stringResource(id = R.string.end_date_and_time))
+                Text(
+                    text = stringResource(id = R.string.end_date_and_time),
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = stringResource(id = R.string.end_date_and_time)
+                )
             } else {
                 Text(text = endDateAndTime)
             }
@@ -203,11 +233,12 @@ fun AddNewItemScreen(
                     onDismissRequest = { showDialogEnd.value = false },
                     confirmButton = {
                         TextButton(onClick = {
-                            val formattedDateAndTime =
-                                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                                    .format(endDatePickerState.selectedDateMillis)
-                            endDate = formattedDateAndTime
-                            endDateAndTime = endDate
+                            val selectedDateMillis = endDatePickerState.selectedDateMillis
+                            endDate = selectedDateMillis?.let { getFormattedDate(it) }.toString()
+
+                            if (selectedDateMillis != null) {
+                                viewModel.onEndDateTimeSelected(endDate)
+                            }
                             showDialogEnd.value = false
                             showTimePickerEnd = true
                         }) {
@@ -220,9 +251,11 @@ fun AddNewItemScreen(
                         }
                     }
                 ) {
-                    DatePicker(state = endDatePickerState, title = {
-                        Text(text = stringResource(id = R.string.end_date))
-                    })
+                    DatePicker(
+                        state = endDatePickerState,
+                        title = {
+                            Text(text = stringResource(id = R.string.end_date))
+                        })
                 }
             }
 
@@ -232,13 +265,13 @@ fun AddNewItemScreen(
                     onConfirm = {
                         showTimePickerEnd = false
                         val calendar = Calendar.getInstance()
-                        calendar.set(Calendar.HOUR_OF_DAY, endTimePickerState.hour)
-                        calendar.set(Calendar.MINUTE, endTimePickerState.minute)
+                        calendar.set(Calendar.HOUR_OF_DAY, timePickerStateVertical.hour)
+                        calendar.set(Calendar.MINUTE, timePickerStateVertical.minute)
                         val timeInMillis = calendar.time.time
-                        val formattedTime =
-                            SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(timeInMillis)
+                        val formattedTime = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(timeInMillis)
                         endTime = formattedTime
-                        endDateAndTime = "$endDate$endTime"
+                        val dateAndTime = convertToIsoDateTime("$endDate $endTime")
+                        viewModel.onEndDateTimeSelected(dateAndTime)
                     },
                 ) {
                     TimePicker(
@@ -250,17 +283,28 @@ fun AddNewItemScreen(
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        TextField(
-            value = data.value.category,
-            onValueChange = viewModel::category,
-            label = { Text(stringResource(id = R.string.category)) },
-            modifier = Modifier.fillMaxWidth()
-        )
+        when (val result = categoryItemResult) {
+            is Result.Success -> {
+                val categories = result.data as List<String>
+                Categories(
+                    categories = categories,
+                    onDone = { category ->
+                        if (category != null) {
+                            viewModel.category(category)
+                        }
+                    },
+                )
+            }
+            // Handle other cases if needed
+            else -> {
+                // Handle loading or error cases
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
-            viewModel.addAuctionItem(navigate,context)
+            viewModel.addAuctionItem(navigate, context)
             Log.d("TAG", "AddNewItemScreen: ${data.value}")
         }
         ) {
@@ -268,3 +312,53 @@ fun AddNewItemScreen(
         }
     }
 }
+
+
+@Composable
+fun Categories(
+    categories: List<String>,
+    onDone: (category: String?) -> Unit,
+) {
+    var expanded by remember {
+        mutableStateOf(false)
+    }
+    var selectedCategoryIndex by remember { mutableIntStateOf(0) }
+
+    Column(modifier = Modifier.fillMaxWidth().background(Color.LightGray)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = { expanded = true })
+        ) {
+            Text(
+                text = if (selectedCategoryIndex == 0) stringResource(id = R.string.select_category) else categories[selectedCategoryIndex - 1],
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            categories.forEachIndexed { index, category ->
+                DropdownMenuItem(
+                    onClick = {
+                        selectedCategoryIndex = index + 1
+                        expanded = false
+                        onDone(category)
+                    },
+                    text = {
+                        Text(text = category)
+                    }
+                )
+            }
+        }
+    }
+}
+
+fun getFormattedDate(timeInMillis: Long): String {
+    val calender = Calendar.getInstance()
+    calender.timeInMillis = timeInMillis
+    val dateFormat = SimpleDateFormat("dd/MM/yyyy")
+    return dateFormat.format(calender.timeInMillis)
+}
+

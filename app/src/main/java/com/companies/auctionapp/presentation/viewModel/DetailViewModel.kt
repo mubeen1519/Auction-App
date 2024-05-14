@@ -3,10 +3,12 @@ package com.companies.auctionapp.presentation.viewModel
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.companies.auctionapp.data.BidPlaced
 import com.companies.auctionapp.domain.RetrofitInstance
 import com.companies.auctionapp.ui.utils.Result
 import com.companies.auctionapp.ui.utils.SharedPreferencesHelper
@@ -18,18 +20,24 @@ class DetailViewModel : ViewModel() {
     val bids: LiveData<Result> = _bids
 
     private val _bidPlaced = MutableLiveData(false)
-    val bidPlaced : LiveData<Boolean> = _bidPlaced
+    val bidPlaced: LiveData<Boolean> = _bidPlaced
 
     private val _itemPurchased = MutableLiveData(false)
-    val itemPurchased : LiveData<Boolean> = _itemPurchased
+    val itemPurchased: LiveData<Boolean> = _itemPurchased
 
 
+    private val _bidAmount = MutableLiveData<Double>()
+    val bidAmount: LiveData<Double> = _bidAmount
 
+    // Function to update the bid amount
+    fun updateBidAmount(amount: Double) {
+        _bidAmount.value = amount
+    }
 
-    fun fetchBids(itemId : Int,context: Context) {
+    fun fetchBids(itemId: Int, context: Context) {
         val userDetails = SharedPreferencesHelper.getUserDetails()
-        if(userDetails?.username?.isEmpty() == true){
-            Toast.makeText(context,"Please Login First to see items",Toast.LENGTH_SHORT).show()
+        if (userDetails?.username?.isEmpty() == true) {
+            Toast.makeText(context, "Please Login First to see items", Toast.LENGTH_SHORT).show()
             return
         }
         viewModelScope.launch {
@@ -38,46 +46,55 @@ class DetailViewModel : ViewModel() {
                 val newToken = response?.body()?.token
                 Log.d("TAG", "new token: $newToken")
                 _bids.value = Result.Loading
-                if (newToken!= null) {
-                    val bidList = RetrofitInstance.apiService.getBidsForItem("Bearer $newToken", itemId)
-                        _bids.value = Result.Success(bidList)
-                        Log.d("TAG",bidList.toString())
-                    }
-            } catch (e : Exception){
-               _bids.value = Result.Error(e)
+                if (newToken != null) {
+                    val bidList =
+                        RetrofitInstance.apiService.getBidsForItem("Bearer $newToken", itemId)
+                    _bids.value = Result.Success(bidList)
+                    Log.d("TAG", bidList.toString())
+                }
+            } catch (e: Exception) {
+                _bids.value = Result.Error(e)
             }
         }
     }
 
-    fun purchaseItem(username : String,itemId: Int,context: Context){
+    fun purchaseItem(username: String, itemId: Int, context: Context) {
         val userDetails = SharedPreferencesHelper.getUserDetails()
-        if(userDetails?.username?.isEmpty() == true){
-            Toast.makeText(context,"Please Login First to see items",Toast.LENGTH_SHORT).show()
+        if (userDetails?.username?.isEmpty() == true) {
+            Toast.makeText(context, "Please Login First to see items", Toast.LENGTH_SHORT).show()
             return
         }
         viewModelScope.launch {
             try {
-            val response = userDetails?.let { RetrofitInstance.apiService.login(it) }
-            val newToken = response?.body()?.token
-            Log.d("TAG", "addAuctionItem: $newToken")
-                if (newToken!= null) {
-                    val purchaseResponse = RetrofitInstance.apiService.purchaseItem("Bearer $newToken", username,itemId)
-                    if(purchaseResponse.isSuccessful){
-                        Toast.makeText(context,purchaseResponse.body()?.message,Toast.LENGTH_SHORT).show()
-                        Log.d("TAG",purchaseResponse.message())
+                val response = userDetails?.let { RetrofitInstance.apiService.login(it) }
+                val newToken = response?.body()?.token
+                Log.d("TAG", "addAuctionItem: $newToken")
+                if (newToken != null) {
+                    val purchaseResponse = RetrofitInstance.apiService.purchaseItem(
+                        "Bearer $newToken",
+                        username,
+                        itemId
+                    )
+                    if (purchaseResponse.isSuccessful) {
+                        Toast.makeText(
+                            context,
+                            purchaseResponse.body()?.message,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        Log.d("TAG", purchaseResponse.message())
                         _itemPurchased.value = true
                     }
                 } else {
-                    Toast.makeText(context,"Something Went wrong",Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Something Went wrong", Toast.LENGTH_SHORT).show()
                 }
 
-            } catch (e : Exception){
+            } catch (e: Exception) {
                 Log.d("TAG", "purchaseItem: $e")
             }
         }
     }
 
-     fun loginUserAgain() {
+    fun loginUserAgain() {
         val userDetails = SharedPreferencesHelper.getUserDetails()
         userDetails?.let {
             viewModelScope.launch {
@@ -93,22 +110,37 @@ class DetailViewModel : ViewModel() {
         }
     }
 
-    fun placeBid(itemId: Int,amount : Double,context: Context){
+    fun placeBid(itemId: Int, context: Context, amount: Double) {
         val userDetails = SharedPreferencesHelper.getUserDetails()
-        if(userDetails?.username?.isEmpty() == true){
-            Toast.makeText(context,"Please Login First to see items",Toast.LENGTH_SHORT).show()
+        if (userDetails?.username?.isEmpty() == true) {
+            Toast.makeText(context, "Please Login First to see items", Toast.LENGTH_SHORT).show()
             return
         }
         viewModelScope.launch {
-            val response = userDetails?.let { RetrofitInstance.apiService.login(it) }
-            val newToken = response?.body()?.token
-            Log.d("TAG", "addAuctionItem: $newToken")
-            if (newToken != null) {
-                val placeBid = RetrofitInstance.apiService.makeBid("Bearer $newToken",itemId,amount)
-                if(placeBid.isSuccessful){
-                    _bidPlaced.value = true
+            try {
+                val response = userDetails?.let { RetrofitInstance.apiService.login(it) }
+                val newToken = response?.body()?.token
+                Log.d("TAG", "addAuctionItem: $newToken")
+
+                if (newToken != null) {
+                    val placeBid = RetrofitInstance.apiService.makeBid(
+                        "Bearer $newToken",
+                        itemId,
+                        BidPlaced(amount)
+                    )
+
+                    if (placeBid.isSuccessful) {
+                        _bidPlaced.value = true
+                    } else {
+                        val errorBody = placeBid.body()?.message
+                        Toast.makeText(context, errorBody, Toast.LENGTH_SHORT).show()
+                        Log.e("TAG", "placeBid error: ${errorBody ?: "Unknown error"}")
+                    }
+                    Log.d("TAG", "placeBid: ${placeBid.body()},${bidAmount.value}")
                 }
-                Log.d("TAG", "placeBid: $placeBid")
+            } catch (e: Exception) {
+                Log.e("TAG", "placeBid network error: ${e.message}")
+                // Provide user-friendly feedback (e.g., Toast or snackbar)
             }
         }
     }

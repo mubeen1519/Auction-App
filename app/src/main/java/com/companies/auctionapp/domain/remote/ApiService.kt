@@ -41,10 +41,10 @@ interface ApiService {
     suspend fun getBidsForItem(@Header("Authorization") token : String,@Path("itemId") itemId: Int): List<Bid>
 
     @POST("auction/Items/{itemId}/bids")
-    suspend fun makeBid(@Header("Authorization") token : String,@Path("itemId") itemId: Int, @Body amount: Double) : Response<BidPlaced>
+    suspend fun makeBid(@Header("Authorization") token : String,@Path("itemId") itemId: Int, @Body amount: BidPlaced) : Response<RegistrationResponse>
 
     @POST("auction/Items")
-    suspend fun addItem(@Body addItem : AddAuctionModel,@Header("Authorization") token : String) : Response<AddAuctionModel>
+    suspend fun addItem(@Body addItem : AddAuctionModel,@Header("Authorization") token : String) : Response<Unit>
 
     @GET("auction/Sellers/{username}/items")
     suspend fun getSoldItems(@Header("Authorization") token : String, @Path("username") username : String) : Response<List<String>>

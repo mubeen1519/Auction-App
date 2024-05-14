@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,7 +51,12 @@ fun DetailsScreen(
     val isBidPlaced = viewModel.bidPlaced.observeAsState()
     val isItemPurchased = viewModel.itemPurchased.observeAsState()
     val isLoggedIn = SharedPreferencesHelper.getUserDetails()
+
     val context = LocalContext.current
+    var text by remember {
+        mutableStateOf( "")
+    }
+
 
     LaunchedEffect(key1 = Unit) {
         viewModel.fetchBids(auctionItem.id, context)
@@ -128,9 +135,9 @@ fun DetailsScreen(
             }
         }
         if (isLoggedIn?.username?.isNotEmpty() == true || isLoggedIn?.username != auctionItem.seller) {
-            if (isBidPlaced.value == true || isItemPurchased.value == true) {
+            if (isBidPlaced.value == true) {
                 Text(
-                    text = if (isItemPurchased.value == false) stringResource(id = R.string.you_already_place_bid) else stringResource(id = R.string.purchase_this_item)
+                    text = stringResource(id = R.string.you_already_place_bid)
                 )
             } else {
                 Row(
@@ -146,61 +153,44 @@ fun DetailsScreen(
                     }
 
                     if (showDialog) {
-                        BidDialog(
-                            onDismiss = { showDialog = false },
-                            onDone = {
-                                viewModel.placeBid(auctionItem.id, it.toDouble(), context)
-                                viewModel.fetchBids(auctionItem.id, context)
+                        AlertDialog(onDismissRequest = {showDialog = false}, confirmButton = {
+                            TextButton(onClick = {
+                                // Place the bid
+                                viewModel.placeBid(auctionItem.id,context,text.toDouble())
+                                viewModel.fetchBids(auctionItem.id,context)
+                                showDialog = false
+                            }) {
+                                Text(text = stringResource(id = R.string.place_bid))
+                            }
+                        },
+                            dismissButton = {
+                                TextButton(onClick = { showDialog = false }) {
+                                    Text(text = stringResource(id = R.string.cancel))
+                                }
                             },
+                            title = {
+                                Text(text = stringResource(id = R.string.enter_amount))
+                            },
+                            text = {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(10.dp)
+                                ) {
+                                    OutlinedTextField(
+                                        value = text,
+                                        onValueChange = {
+                                          text = it
+                                        },
+                                        singleLine = true,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                    )
+                                }
+                            }
                         )
                     }
                 }
             }
         }
     }
-}
-
-
-@Composable
-fun BidDialog(
-    onDismiss: () -> Unit,
-    onDone: (String) -> Unit
-) {
-    var amount by remember {
-        mutableStateOf("")
-    }
-    AlertDialog(onDismissRequest = onDismiss, confirmButton = {
-        TextButton(onClick = {
-            onDone(amount)
-            onDismiss()
-        }) {
-            Text(text = stringResource(id = R.string.place_bid))
-        }
-    },
-        dismissButton = {
-            TextButton(onClick = { onDismiss() }) {
-                Text(text = stringResource(id = R.string.cancel))
-            }
-        },
-        title = {
-            Text(text = stringResource(id = R.string.enter_amount))
-        },
-        text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp)
-            ) {
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { amount = it },
-                    placeholder = {
-                        Text(
-                            text = stringResource(id = R.string.enter_decimal)
-                        )
-                    })
-            }
-        }
-    )
-
 }

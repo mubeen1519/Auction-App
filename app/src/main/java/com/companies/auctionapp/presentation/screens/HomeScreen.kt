@@ -66,6 +66,8 @@ fun HomeScreen(
 
 
 
+
+
     Scaffold(
         topBar = {
             TopAppBar(title = { /*TODO*/ },
@@ -151,7 +153,7 @@ fun HomeScreen(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(10.dp)
+                            .padding(start = 10.dp, end = 10.dp, top = 10.dp, bottom = 100.dp)
                     ) {
                         items(auctionItems) { auctionItem ->
                             AuctionItemRow(

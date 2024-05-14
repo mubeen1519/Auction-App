@@ -8,11 +8,14 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.companies.auctionapp.data.AddAuctionModel
 import com.companies.auctionapp.domain.RetrofitInstance
 import com.companies.auctionapp.presentation.navigation.HOME_SCREEN
+import com.companies.auctionapp.ui.utils.Result
 import com.companies.auctionapp.ui.utils.SharedPreferencesHelper
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -22,8 +25,15 @@ import java.util.Locale
 
 class AddViewModel : ViewModel() {
 
+    private val _categoriesItemResult = MutableLiveData<Result>()
+    val categoriesItemsResult: LiveData<Result> = _categoriesItemResult
+
     var data = mutableStateOf(AddAuctionModel())
 
+
+    init {
+        fetchAllCategories()
+    }
 
     fun onNameChanged(newValue: String) {
         data.value = data.value.copy(name = newValue)
@@ -48,18 +58,14 @@ class AddViewModel : ViewModel() {
     val endDateAndTime: State<String> = _endDateAndTime
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun onStartDateTimeSelected(selectedDateMillis: Long, selectedTime: LocalTime) {
-        val formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(selectedDateMillis)
-        val formattedTime = selectedTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))
-        _startDateAndTime.value = "$formattedDate $formattedTime"
+    fun onStartDateTimeSelected(selectedDateMillis: String) {
+        _startDateAndTime.value = selectedDateMillis
         data.value = data.value.copy(startDateTime = _startDateAndTime.value)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun onEndDateTimeSelected(selectedDateMillis: Long, selectedTime: LocalTime) {
-        val formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(selectedDateMillis)
-        val formattedTime = selectedTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"))
-        _endDateAndTime.value = "$formattedDate $formattedTime"
+    fun onEndDateTimeSelected(selectedDateMillis: String) {
+        _endDateAndTime.value = "$selectedDateMillis"
         data.value = data.value.copy(endDateTime = _endDateAndTime.value)
 
     }
@@ -97,4 +103,19 @@ class AddViewModel : ViewModel() {
             }
         }
     }
+    private fun fetchAllCategories() {
+        viewModelScope.launch {
+            try {
+                _categoriesItemResult.value = Result.Loading
+                val response = RetrofitInstance.apiService.getAllCategories()
+
+                if (response.isNotEmpty()) {
+                    _categoriesItemResult.value = Result.Success(response)
+                }
+            } catch (e: Exception) {
+                _categoriesItemResult.value = Result.Error(e)
+            }
+        }
+    }
 }
+
