@@ -35,6 +35,7 @@ class SoldItemViewModel : ViewModel() {
                     val soldApi = RetrofitInstance.apiService.getSoldItems("Bearer $newToken",username)
                     if(soldApi.isSuccessful){
                             _soldItems.value = Result.Success(soldApi)
+                        Log.d("TAG", "getSoldItems: ${soldApi.body()}")
 
                     } else {
                         Log.d("TAG", "getSoldItems: $soldApi")

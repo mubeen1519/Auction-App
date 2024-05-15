@@ -134,7 +134,7 @@ fun DetailsScreen(
                 }
             }
         }
-        if (isLoggedIn?.username?.isNotEmpty() == true || isLoggedIn?.username != auctionItem.seller) {
+        if (isLoggedIn?.username?.isNotEmpty() == true && isLoggedIn.username != auctionItem.seller) {
             if (isBidPlaced.value == true) {
                 Text(
                     text = stringResource(id = R.string.you_already_place_bid)

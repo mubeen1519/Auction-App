@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -84,6 +85,18 @@ fun PurchasedItemScreen(viewModel: PurchasedViewModel = androidx.lifecycle.viewm
                                         Text(text = "End Date: ${item.endDateTime}")
                                         Text(text = "Seller: ${item.seller}")
                                         Text(text = "Payed ${item.payed}")
+                                    }
+                                    Row(modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Button(onClick = {
+                                            viewModel.purchaseItem(isLoggedIn.username,item.id,context)
+                                        }) {
+                                            Text(text = "Purchase")
+                                        }
                                     }
                                 }
                             }

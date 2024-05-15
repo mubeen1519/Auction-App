@@ -58,41 +58,7 @@ class DetailViewModel : ViewModel() {
         }
     }
 
-    fun purchaseItem(username: String, itemId: Int, context: Context) {
-        val userDetails = SharedPreferencesHelper.getUserDetails()
-        if (userDetails?.username?.isEmpty() == true) {
-            Toast.makeText(context, "Please Login First to see items", Toast.LENGTH_SHORT).show()
-            return
-        }
-        viewModelScope.launch {
-            try {
-                val response = userDetails?.let { RetrofitInstance.apiService.login(it) }
-                val newToken = response?.body()?.token
-                Log.d("TAG", "addAuctionItem: $newToken")
-                if (newToken != null) {
-                    val purchaseResponse = RetrofitInstance.apiService.purchaseItem(
-                        "Bearer $newToken",
-                        username,
-                        itemId
-                    )
-                    if (purchaseResponse.isSuccessful) {
-                        Toast.makeText(
-                            context,
-                            purchaseResponse.body()?.message,
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        Log.d("TAG", purchaseResponse.message())
-                        _itemPurchased.value = true
-                    }
-                } else {
-                    Toast.makeText(context, "Something Went wrong", Toast.LENGTH_SHORT).show()
-                }
 
-            } catch (e: Exception) {
-                Log.d("TAG", "purchaseItem: $e")
-            }
-        }
-    }
 
     fun loginUserAgain() {
         val userDetails = SharedPreferencesHelper.getUserDetails()

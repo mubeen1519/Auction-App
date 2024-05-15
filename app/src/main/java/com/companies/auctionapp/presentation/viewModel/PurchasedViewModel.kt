@@ -36,12 +36,52 @@ class PurchasedViewModel : ViewModel() {
                     if (purchasedApi.isSuccessful) {
                         val purchasedItems = purchasedApi.body() // Extract the actual data from the response
                         _purchasedItems.value = purchasedItems?.let { Result.Success(it) }
+                        Log.d("TAG", "getItems: ${purchasedApi.body()}")
+
                     } else {
                         Log.d("TAG", "getSoldItems: $purchasedApi")
                     }
                 }
             } catch (e: Exception) {
                 _purchasedItems.value = Result.Error(e)
+            }
+        }
+    }
+
+    fun purchaseItem(username: String, itemId: Int, context: Context) {
+        val userDetails = SharedPreferencesHelper.getUserDetails()
+        if (userDetails?.username?.isEmpty() == true) {
+            Toast.makeText(context, "Please Login First to see items", Toast.LENGTH_SHORT).show()
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val response = userDetails?.let { RetrofitInstance.apiService.login(it) }
+                val newToken = response?.body()?.token
+                Log.d("TAG", "addAuctionItem: $newToken")
+                if (newToken != null) {
+                    val purchaseResponse = RetrofitInstance.apiService.purchaseItem(
+                        "Bearer $newToken",
+                        username,
+                        itemId
+                    )
+                    if (purchaseResponse.isSuccessful) {
+                        Toast.makeText(
+                            context,
+                            "Purchase Successful",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        Log.d("TAG", purchaseResponse.message())
+                    } else {
+                        val errorBody = purchaseResponse.body()?.message
+                        Toast.makeText(context, purchaseResponse.message(), Toast.LENGTH_SHORT).show()
+                        Log.e("TAG", "placeBid error: ${errorBody ?: "Unknown error"}")
+
+                    }
+                }
+
+            } catch (e: Exception) {
+                Log.d("TAG", "purchaseItem: $e")
             }
         }
     }
