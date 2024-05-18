@@ -89,6 +89,7 @@ class AddViewModel : ViewModel() {
                     val addItemResponse = RetrofitInstance.apiService.addItem(data.value, "Bearer $newToken")
                     if (addItemResponse.isSuccessful) {
                         navigate(HOME_SCREEN)
+                        Toast.makeText(context,"Item Added Successfully",Toast.LENGTH_SHORT).show()
                         Log.d("TAG", "addAuctionItem: $addItemResponse")
                     } else {
                         // Handle addItem API error response
