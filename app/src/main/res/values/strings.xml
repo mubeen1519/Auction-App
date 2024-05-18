@@ -36,4 +36,6 @@
     <string name="no_purchased_Item">You dont have any purchased item yet</string>
     <string name="login_to_see_purchased">Please Login to see your purchased items</string>
     <string name="purchase_item">Purchase Items</string>
+    <string name="logout_text">User Logout Successfully</string>
+    <string name="logout">Logout</string>
 </resources>

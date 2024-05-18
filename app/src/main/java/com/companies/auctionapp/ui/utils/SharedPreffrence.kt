@@ -55,4 +55,18 @@ object SharedPreferencesHelper {
         val typeString = sharedPreferences.getString(KEY_ACCOUNT_TYPE, null)
         return typeString?.let { AccountType.valueOf(it) } // Convert string to enum value
     }
+
+    // Function to delete user data
+    fun deleteUserDetails() {
+        sharedPreferences.edit {
+            remove(KEY_USER_DETAILS)
+        }
+    }
+
+    // Function to delete account type
+    fun deleteAccountType() {
+        sharedPreferences.edit {
+            remove(KEY_ACCOUNT_TYPE)
+        }
+    }
 }

@@ -37,7 +37,7 @@ fun PurchasedItemScreen(viewModel: PurchasedViewModel = androidx.lifecycle.viewm
 
     LaunchedEffect(key1 = Unit) {
         if (isLoggedIn?.username?.isNotEmpty() == true) {
-            viewModel.getPurchasedItem(isLoggedIn.username, context)
+            viewModel.getPurchasedItem(context)
         }
     }
     Column(
@@ -66,7 +66,7 @@ fun PurchasedItemScreen(viewModel: PurchasedViewModel = androidx.lifecycle.viewm
                     if (purchasedItems.isEmpty()) {
                         Text(text = stringResource(id = R.string.no_purchased_Item))
                     } else {
-                        LazyColumn {
+                        LazyColumn(modifier = Modifier.padding(bottom = 100.dp)) {
                             items(purchasedItems) { item ->
                                 Card(
                                     modifier = Modifier
@@ -93,7 +93,7 @@ fun PurchasedItemScreen(viewModel: PurchasedViewModel = androidx.lifecycle.viewm
                                         horizontalArrangement = Arrangement.Center
                                     ) {
                                         Button(onClick = {
-                                            viewModel.purchaseItem(isLoggedIn.username,item.id,context)
+                                            viewModel.purchaseItem(item.id,context)
                                         }) {
                                             Text(text = "Purchase")
                                         }

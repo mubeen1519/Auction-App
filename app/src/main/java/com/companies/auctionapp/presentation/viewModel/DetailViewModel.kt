@@ -29,10 +29,7 @@ class DetailViewModel : ViewModel() {
     private val _bidAmount = MutableLiveData<Double>()
     val bidAmount: LiveData<Double> = _bidAmount
 
-    // Function to update the bid amount
-    fun updateBidAmount(amount: Double) {
-        _bidAmount.value = amount
-    }
+
 
     fun fetchBids(itemId: Int, context: Context) {
         val userDetails = SharedPreferencesHelper.getUserDetails()
@@ -97,6 +94,7 @@ class DetailViewModel : ViewModel() {
 
                     if (placeBid.isSuccessful) {
                         _bidPlaced.value = true
+                        Toast.makeText(context,"Bid placed successfully", Toast.LENGTH_SHORT).show()
                     } else {
                         val errorBody = placeBid.body()?.message
                         Toast.makeText(context, errorBody, Toast.LENGTH_SHORT).show()

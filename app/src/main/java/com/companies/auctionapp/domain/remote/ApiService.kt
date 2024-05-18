@@ -9,6 +9,7 @@ import com.companies.auctionapp.data.LoginResponse
 import com.companies.auctionapp.data.PurchaseItemData
 import com.companies.auctionapp.data.RegisterData
 import com.companies.auctionapp.data.RegistrationResponse
+import com.companies.auctionapp.data.SoldResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -47,11 +48,11 @@ interface ApiService {
     suspend fun addItem(@Body addItem : AddAuctionModel,@Header("Authorization") token : String) : Response<Unit>
 
     @GET("auction/Sellers/{username}/items")
-    suspend fun getSoldItems(@Header("Authorization") token : String, @Path("username") username : String) : Response<List<String>>
+    suspend fun getSoldItems(@Header("Authorization") token : String, @Path("username") username : String) : Response<List<SoldResponse>>
 
-    @GET("auction/Buyers/{username}/items")
-    suspend fun getPurchasedItems(@Header("Authorization") token : String, @Path("username") username : String) : Response<List<PurchaseItemData>>
+    @GET("auction/Buyers/{userName}/items")
+    suspend fun getPurchasedItems(@Header("Authorization") token : String, @Path("userName") username : String) : Response<List<PurchaseItemData>>
 
-    @GET("auction/Buyers/{username}/items/{itemId}/payment")
-    suspend fun purchaseItem(@Header("Authorization") token : String, @Path("username") username : String,@Path("itemId") itemId: Int) : Response<RegistrationResponse>
+    @POST("auction/Buyers/{userName}/items/{itemId}/payment")
+    suspend fun purchaseItem(@Header("Authorization") token : String, @Path("userName") username : String,@Path("itemId") itemId: Int) : Response<RegistrationResponse>
 }

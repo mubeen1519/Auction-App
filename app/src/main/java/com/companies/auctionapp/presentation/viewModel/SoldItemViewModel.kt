@@ -34,7 +34,7 @@ class SoldItemViewModel : ViewModel() {
                     SharedPreferencesHelper.saveJwtToken(newToken)
                     val soldApi = RetrofitInstance.apiService.getSoldItems("Bearer $newToken",username)
                     if(soldApi.isSuccessful){
-                            _soldItems.value = Result.Success(soldApi)
+                            _soldItems.value = soldApi.body()?.let { Result.Success(it) }
                         Log.d("TAG", "getSoldItems: ${soldApi.body()}")
 
                     } else {

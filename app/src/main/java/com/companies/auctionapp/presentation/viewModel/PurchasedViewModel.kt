@@ -17,7 +17,7 @@ class PurchasedViewModel : ViewModel() {
     private val _purchasedItems = MutableLiveData<Result>()
     val purchasedItems: LiveData<Result> = _purchasedItems
 
-    fun getPurchasedItem(username: String, context: Context) {
+    fun getPurchasedItem(context: Context) {
         val userDetails = SharedPreferencesHelper.getUserDetails()
         if (userDetails?.username?.isEmpty() == true) {
             Toast.makeText(context, "Please Login First to see items", Toast.LENGTH_SHORT).show()
@@ -32,8 +32,9 @@ class PurchasedViewModel : ViewModel() {
                 if (newToken != null) {
                     SharedPreferencesHelper.saveJwtToken(newToken)
                     val purchasedApi =
-                        RetrofitInstance.apiService.getPurchasedItems("Bearer $newToken", username)
+                        RetrofitInstance.apiService.getPurchasedItems("Bearer $newToken", userDetails.username)
                     if (purchasedApi.isSuccessful) {
+
                         val purchasedItems = purchasedApi.body() // Extract the actual data from the response
                         _purchasedItems.value = purchasedItems?.let { Result.Success(it) }
                         Log.d("TAG", "getItems: ${purchasedApi.body()}")
@@ -48,7 +49,7 @@ class PurchasedViewModel : ViewModel() {
         }
     }
 
-    fun purchaseItem(username: String, itemId: Int, context: Context) {
+    fun purchaseItem(itemId: Int, context: Context) {
         val userDetails = SharedPreferencesHelper.getUserDetails()
         if (userDetails?.username?.isEmpty() == true) {
             Toast.makeText(context, "Please Login First to see items", Toast.LENGTH_SHORT).show()
@@ -62,7 +63,7 @@ class PurchasedViewModel : ViewModel() {
                 if (newToken != null) {
                     val purchaseResponse = RetrofitInstance.apiService.purchaseItem(
                         "Bearer $newToken",
-                        username,
+                        userDetails.username,
                         itemId
                     )
                     if (purchaseResponse.isSuccessful) {
@@ -73,10 +74,8 @@ class PurchasedViewModel : ViewModel() {
                         ).show()
                         Log.d("TAG", purchaseResponse.message())
                     } else {
-                        val errorBody = purchaseResponse.body()?.message
                         Toast.makeText(context, purchaseResponse.message(), Toast.LENGTH_SHORT).show()
-                        Log.e("TAG", "placeBid error: ${errorBody ?: "Unknown error"}")
-
+                        Log.e("TAG", "placeBid error: ${purchaseResponse.body() ?: "Unknown error"}")
                     }
                 }
 

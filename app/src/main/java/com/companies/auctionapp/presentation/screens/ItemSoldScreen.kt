@@ -24,6 +24,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.companies.auctionapp.R
+import com.companies.auctionapp.data.PurchaseItemData
+import com.companies.auctionapp.data.SoldResponse
 import com.companies.auctionapp.presentation.viewModel.SoldItemViewModel
 import com.companies.auctionapp.ui.utils.Result
 import com.companies.auctionapp.ui.utils.SharedPreferencesHelper
@@ -65,10 +67,7 @@ fun ItemSoldScreen(soldItemViewModel: SoldItemViewModel = viewModel()) {
                 }
 
                 is Result.Success -> {
-                    val soldItems = when (val responseData = result.data) {
-                        is List<*> -> responseData.filterIsInstance<String>()
-                        else -> emptyList() // Handle unexpected response format
-                    }
+                    val soldItems =  result.data as List<SoldResponse>
                     if (soldItems.isEmpty()) {
                         Text(text = stringResource(id = R.string.you_dont_have_sold_items))
                     } else {
@@ -79,15 +78,17 @@ fun ItemSoldScreen(soldItemViewModel: SoldItemViewModel = viewModel()) {
                                         .fillMaxWidth()
                                         .padding(10.dp)
                                 ) {
-                                    Row(
+                                    Column(
                                         modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
+                                        horizontalAlignment = Alignment.CenterHorizontally,
                                     ) {
-                                        Text(text = item)
-                                        Button(onClick = { /*TODO*/ }) {
-                                            Text(text = "Purchase")
-                                        }
+                                        Text(text = "Name: ${item.name}")
+                                        Text(text = "Price: ${item.price}")
+                                        Text(text = "Description: ${item.description}")
+                                        Text(text = "Category: ${item.category}")
+                                        Text(text = "Start Date: ${item.startDateTime}")
+                                        Text(text = "End Date: ${item.endDateTime}")
+                                        Text(text = "Buyer: ${item.buyer}")
                                     }
                                 }
                             }
